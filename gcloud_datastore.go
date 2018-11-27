@@ -241,8 +241,9 @@ func (s *dataStore) saveToDatastore() {
 		key := datastore.NameKey(s.dsEntityName, sess.ID(), nil)
 		for i := 0; i < s.retries; i++ {
 			if _, err = client.Put(context.Background(), key, &e); err == nil {
-				log.Printf("Error: %v", err)
 				break
+			} else if err != nil {
+				log.Printf("Error: %v", err)
 			}
 		}
 		if err != nil {
