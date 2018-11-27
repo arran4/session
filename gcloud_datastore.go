@@ -208,8 +208,10 @@ func (s *dataStore) Remove(sess Session) {
 	defer client.Close()
 
 	key := datastore.NameKey(s.dsEntityName, sess.ID(), nil)
-	client.Delete(context.Background(), key)
-	log.Printf("ERROR: Failed to remove session from memcache, id: %s, error: %v", sess.ID(), err)
+	err = client.Delete(context.Background(), key)
+	if err != nil {
+		log.Printf("ERROR: Failed to remove session from memcache, id: %s, error: %v", sess.ID(), err)
+	}
 }
 
 // Close is to implement Store.Close().
