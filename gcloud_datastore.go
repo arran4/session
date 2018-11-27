@@ -75,7 +75,7 @@ type DataStoreOptions struct {
 // The Key is the session id.
 type SessEntity struct {
 	Expires time.Time `datastore:"exp"`
-	Value   []byte    `datastore:"val"`
+	Value   []byte    `datastore:"val,noindex"`
 }
 
 // Pointer to zero value of DataStoreOptions to be reused for efficiency.
