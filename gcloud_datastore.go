@@ -136,6 +136,7 @@ func (s *dataStore) Get(id string) Session {
 
 	client, err = datastore.NewClient(context.Background(), s.projectId)
 	if err != nil {
+		log.Printf("Error: %v", err)
 		return nil
 	}
 
@@ -146,10 +147,12 @@ func (s *dataStore) Get(id string) Session {
 			e := SessEntity{}
 			err = client.Get(context.Background(), key, &e)
 			if err == datastore.ErrNoSuchEntity {
+				log.Printf("Error: %v", err)
 				return nil // It's not in the Datastore either
 			}
 			if err != nil {
 				// Service error? Retry..
+				log.Printf("Error: %v", err)
 				continue
 			}
 			if e.Expires.Before(time.Now()) {
@@ -159,6 +162,7 @@ func (s *dataStore) Get(id string) Session {
 			}
 			var sess_ sessionImpl
 			if err = s.codec.Unmarshal(e.Value, &sess_); err != nil {
+				log.Printf("Error: %v", err)
 				break // Invalid data in stored session entity...
 			}
 			sess = &sess_
@@ -197,6 +201,7 @@ func (s *dataStore) Remove(sess Session) {
 	var client *datastore.Client
 	client, err = datastore.NewClient(context.Background(), s.projectId)
 	if err != nil {
+		log.Printf("Error: %v", err)
 		return
 	}
 
@@ -219,6 +224,7 @@ func (s *dataStore) saveToDatastore() {
 	// We could use datastore.PutMulti(), but sessions will contain at most 1 session like all the times.
 	client, err := datastore.NewClient(context.Background(), s.projectId)
 	if err != nil {
+		log.Printf("Error: %v", err)
 		return
 	}
 
@@ -235,6 +241,7 @@ func (s *dataStore) saveToDatastore() {
 		key := datastore.NameKey(s.dsEntityName, sess.ID(), nil)
 		for i := 0; i < s.retries; i++ {
 			if _, err = client.Put(context.Background(), key, &e); err == nil {
+				log.Printf("Error: %v", err)
 				break
 			}
 		}
@@ -266,6 +273,7 @@ func PurgeExpiredSessFromDSFunc(projectId, dsEntityName string) http.HandlerFunc
 	return func(w http.ResponseWriter, r *http.Request) {
 		client, err := datastore.NewClient(context.Background(), projectId)
 		if err != nil {
+			log.Printf("Error: %v", err)
 			return
 		}
 
