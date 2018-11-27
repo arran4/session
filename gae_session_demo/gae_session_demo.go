@@ -1,5 +1,3 @@
-// +build appengine
-
 /*
 This is a session demo application that can be run on Google AppEngine platform.
 You can also try it locally by running 'goapp serve' from this folder.
@@ -11,12 +9,12 @@ Code demonstrates session access, creation and removal.
 package main
 
 import (
+	"google.golang.org/appengine"
 	"html/template"
 	"log"
 	"net/http"
 
-	"github.com/icza/session"
-	"google.golang.org/appengine"
+	"github.com/arran4/session"
 )
 
 func init() {

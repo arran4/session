@@ -1,5 +1,3 @@
-// +build appengine
-
 /*
 
 A Google App Engine Memcache session store implementation.
