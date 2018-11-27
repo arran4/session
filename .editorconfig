@@ -8,4 +8,4 @@ trim_trailing_whitespace = true
 
 [*.go]
 indent_style = tab
-indent_size = 8
+indent_size = 2
