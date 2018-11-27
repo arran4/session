@@ -139,6 +139,7 @@ func (s *dataStore) Get(id string) Session {
 		log.Printf("Error: %v", err)
 		return nil
 	}
+	defer client.Close()
 
 	if sess == nil {
 		// Now it's time to check in the Datastore.
@@ -204,6 +205,7 @@ func (s *dataStore) Remove(sess Session) {
 		log.Printf("Error: %v", err)
 		return
 	}
+	defer client.Close()
 
 	key := datastore.NameKey(s.dsEntityName, sess.ID(), nil)
 	client.Delete(context.Background(), key)
@@ -227,6 +229,7 @@ func (s *dataStore) saveToDatastore() {
 		log.Printf("Error: %v", err)
 		return
 	}
+	defer client.Close()
 
 	for _, sess := range s.sessions {
 		value, err := s.codec.Marshal(sess)
@@ -277,6 +280,7 @@ func PurgeExpiredSessFromDSFunc(projectId, dsEntityName string) http.HandlerFunc
 			log.Printf("Error: %v", err)
 			return
 		}
+		defer client.Close()
 
 		// Delete in batches of 100
 		q := datastore.NewQuery(dsEntityName).Filter("exp<", time.Now()).KeysOnly().Limit(100)
