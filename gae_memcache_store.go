@@ -34,8 +34,8 @@ import (
 	"golang.org/x/net/context"
 	"google.golang.org/appengine"
 	"google.golang.org/appengine/datastore"
-	"google.golang.org/appengine/log"
 	"google.golang.org/appengine/memcache"
+	"log"
 )
 
 // A Google App Engine Memcache session store implementation.
@@ -176,7 +176,7 @@ func (s *memcacheStore) Get(id string) Session {
 
 	if sess == nil {
 		if err != nil && err != memcache.ErrCacheMiss {
-			log.Errorf(s.ctx, "Failed to get session from memcache, id: %s, error: %v", id, err)
+			log.Printf("ERROR: Failed to get session from memcache, id: %s, error: %v", id, err)
 		}
 
 		// Ok, we didn't get it from Memcache (either was not there or Memcache service is unavailable).
@@ -207,7 +207,7 @@ func (s *memcacheStore) Get(id string) Session {
 	}
 
 	if sess == nil {
-		log.Errorf(s.ctx, "Failed to get session from datastore, id: %s, error: %v", id, err)
+		log.Printf("ERROR: Failed to get session from datastore, id: %s, error: %v", id, err)
 		return nil
 	}
 
@@ -225,7 +225,7 @@ func (s *memcacheStore) Add(sess Session) {
 	defer s.mux.Unlock()
 
 	if s.setMemcacheSession(sess) {
-		log.Infof(s.ctx, "Session added: %s", sess.ID())
+		log.Printf("INFO: Session added: %s", sess.ID())
 		s.sessions[sess.ID()] = sess
 		return
 	}
@@ -246,7 +246,7 @@ func (s *memcacheStore) setMemcacheSession(sess Session) (success bool) {
 		}
 	}
 
-	log.Errorf(s.ctx, "Failed to add session to memcache, id: %s, error: %v", sess.ID(), err)
+	log.Printf("ERROR: Failed to add session to memcache, id: %s, error: %v", sess.ID(), err)
 	return false
 }
 
@@ -258,7 +258,7 @@ func (s *memcacheStore) Remove(sess Session) {
 	var err error
 	for i := 0; i < s.retries; i++ {
 		if err = memcache.Delete(s.ctx, s.keyPrefix+sess.ID()); err == nil || err == memcache.ErrCacheMiss {
-			log.Infof(s.ctx, "Session removed: %s", sess.ID())
+			log.Printf("INFO: Session removed: %s", sess.ID())
 			delete(s.sessions, sess.ID())
 			if !s.onlyMemcache {
 				// Also from the Datastore:
@@ -268,7 +268,7 @@ func (s *memcacheStore) Remove(sess Session) {
 			return
 		}
 	}
-	log.Errorf(s.ctx, "Failed to remove session from memcache, id: %s, error: %v", sess.ID(), err)
+	log.Printf("ERROR: Failed to remove session from memcache, id: %s, error: %v", sess.ID(), err)
 }
 
 // Close is to implement Store.Close().
@@ -298,7 +298,7 @@ func (s *memcacheStore) saveToDatastore() {
 	for _, sess := range s.sessions {
 		value, err := s.codec.Marshal(sess)
 		if err != nil {
-			log.Errorf(s.ctx, "Failed to marshal session: %s, error: %v", sess.ID(), err)
+			log.Printf("ERROR: Failed to marshal session: %s, error: %v", sess.ID(), err)
 			continue
 		}
 		e := SessEntity{
@@ -312,7 +312,7 @@ func (s *memcacheStore) saveToDatastore() {
 			}
 		}
 		if err != nil {
-			log.Errorf(s.ctx, "Failed to save session to datastore: %s, error: %v", sess.ID(), err)
+			log.Printf("ERROR: Failed to save session to datastore: %s, error: %v", sess.ID(), err)
 		}
 	}
 }
@@ -349,7 +349,7 @@ func PurgeExpiredSessFromDSFunc(dsEntityName string) http.HandlerFunc {
 
 			if keys, err = q.GetAll(c, nil); err != nil {
 				// Datastore error.
-				log.Errorf(c, "Failed to query expired sessions: %v", err)
+				log.Printf("ERROR: Failed to query expired sessions: %v", err)
 				http.Error(w, "Failed to query expired sessions!", http.StatusInternalServerError)
 			}
 			if len(keys) == 0 {
@@ -360,7 +360,7 @@ func PurgeExpiredSessFromDSFunc(dsEntityName string) http.HandlerFunc {
 			}
 
 			if err = datastore.DeleteMulti(c, keys); err != nil {
-				log.Errorf(c, "Error while deleting expired sessions: %v", err)
+				log.Printf("ERROR: Error while deleting expired sessions: %v", err)
 			}
 
 			if time.Now().After(deadline) {
